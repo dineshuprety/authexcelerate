@@ -6,9 +6,9 @@ use App\Http\Requests\StoreJsonUploadRequest;
 use App\Jobs\ExportJsonToExcel;
 use App\Models\JsonUpload;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
-use Illuminate\Support\Facades\Storage;
 
 class JsonUploadController extends Controller
 {
@@ -29,11 +29,13 @@ class JsonUploadController extends Controller
 
     public function store(StoreJsonUploadRequest $request): RedirectResponse
     {
-        $file = $request->file('jsonfile');
-        $originalFilename = $file->getClientOriginalName();
-        $filename = pathinfo($originalFilename, PATHINFO_FILENAME) . '_' . time() . '.' . $file->getClientOriginalExtension();
-        $path = $file->storeAs('jsonfile', $filename);
-
+        // Get the original filename
+        $originalFilename = $request->file('jsonfile')->getClientOriginalName();
+        // Generate a unique filename
+        do {
+            $filename = pathinfo($originalFilename, PATHINFO_FILENAME) . '_' . time() . '.' . $request->file('jsonfile')->getClientOriginalExtension();
+        } while (JsonUpload::query()->where('file_name', $filename)->exists());
+        $path = $request->file('jsonfile')->storeAs('jsonfile', $filename);
         JsonUpload::create([
             'user_id' => auth()->id(),
             'file_name' => $filename,
