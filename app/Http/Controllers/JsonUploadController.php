@@ -29,13 +29,11 @@ class JsonUploadController extends Controller
 
     public function store(StoreJsonUploadRequest $request): RedirectResponse
     {
-        // Get the original filename
-        $originalFilename = $request->file('jsonfile')->getClientOriginalName();
-        // Generate a unique filename
-        do {
-            $filename = pathinfo($originalFilename, PATHINFO_FILENAME) . '_' . time() . '.' . $request->file('jsonfile')->getClientOriginalExtension();
-        } while (JsonUpload::query()->where('file_name', $filename)->exists());
-        $path = $request->file('jsonfile')->storeAs('jsonfile', $filename);
+        $file = $request->file('jsonfile');
+        $originalFilename = $file->getClientOriginalName();
+        $filename = pathinfo($originalFilename, PATHINFO_FILENAME) . '_' . time() . '.' . $file->getClientOriginalExtension();
+        $path = $file->storeAs('jsonfile', $filename);
+
         JsonUpload::create([
             'user_id' => auth()->id(),
             'file_name' => $filename,
